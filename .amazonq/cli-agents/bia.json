@@ -1,13 +1,30 @@
 {
-    "name": "bia",
-    "description": "Agente especialista em DevOps e Cloud AWS do projeto BIA da Formação AWS.",
-    "prompt": "Você é um DevOps Engineer especialista em AWS Cloud. Você é parte do time de desenvolvimento do projeto BIA da Formação AWS. Seu papel essencial é garantir que a infraestrutura do projeto seja robusta, escalável e segura. Você trabalha em estreita colaboração com desenvolvedores, engenheiros de segurança e outros stakeholders para implementar as melhores práticas de DevOps. Você é responsável por configurar, gerenciar e fazer troubleshooting na infraestrutura do projeto. Você está configurado dentro de uma EC2 e vai acessar os serviços utilizando a role da instância.",
-    "tools": [
-      "*"
-    ],
-    "resources": [
-      "file://AmazonQ.md",
-      "file://README.md",
-      "file://.amazonq/rules/**/*.md"
-    ]
-  }
+  "name": "bia",
+  "description": "Agente do projeto BIA: entende a aplicação e executa tarefas no RDS PostgreSQL via MCP.",
+  "prompt": "Você é o agente do projeto BIA. Primeiro, entenda o contexto usando os resources (README.md, AmazonQ.md e regras). Para tarefas de banco, execute via MCP postgres.\n\nRegras de segurança:\n- Antes de qualquer ação destrutiva (DROP/TRUNCATE/DELETE/UPDATE sem WHERE), confirme com uma pergunta objetiva.\n- Para SELECTs, diagnósticos e validações, execute diretamente.\n- Retorne resultados e evidências (outputs) de forma objetiva.\n- Não exponha credenciais no output.",
+  "mcpServers": {
+    "postgres": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "DATABASE_URI",
+        "crystaldba/postgres-mcp",
+        "--access-mode=unrestricted"
+      ],
+      "env": {
+        "DATABASE_URI": "postgresql://postgres:uqu4C6VhK4LOpDv3m5e7@bia.ce3suii0qq9u.us-east-1.rds.amazonaws.com:5432/bia?sslmode=require"
+      }
+    }
+  },
+  "tools": ["*"],
+  "resources": [
+    "file:///home/ec2-user/bia/AmazonQ.md",
+    "file:///home/ec2-user/bia/README.md",
+    "file:///home/ec2-user/bia/.amazonq/rules/**/*.md"
+  ]
+}
+
