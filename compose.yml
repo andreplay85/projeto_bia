@@ -11,4 +11,9 @@ services:
       DB_PORT: "5432"
       DB_USER: postgres
       DB_PWD: uqu4C6VhK4LOpDv3m5e7
-
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: us-east-1
+        awslogs-group: /bia/app
+        awslogs-stream: bia-server
