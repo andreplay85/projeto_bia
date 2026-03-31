@@ -13,26 +13,41 @@ function AppContent() {
   const [tasks, setTasks] = useState([]);
   const { logApiRequest, logApiResponse, logApiError, addLog } = useLog();
 
-  // ✅ Base da API vinda do Vite (build-time)
-  // Exemplo: VITE_API_URL="http://44.195.24.186:8080"
-  const API_BASE = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+  // Base da API vinda do Vite
+  // Exemplo:
+  // VITE_API_URL="https://dev-bia.1labs.com.br"
+  const API_BASE = (import.meta.env.VITE_API_URL || "").trim().replace(/\/$/, "");
 
-  // ✅ Montador de URL: sempre aponta para o backend correto
+  // Montador de URL
+  // Exemplo:
+  // apiUrl("/api/tarefas")
+  // => https://dev-bia.1labs.com.br/api/tarefas
   const apiUrl = (path) => {
-    if (!API_BASE) return path; // fallback (dev local) - mas em produção no S3 deve ter VITE_API_URL
-    return `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+
+    if (!API_BASE) {
+      addLog(
+        "WARN",
+        "VITE_API_URL não definida",
+        `Usando caminho relativo: ${cleanPath}`
+      );
+      return cleanPath;
+    }
+
+    return `${API_BASE}${cleanPath}`;
   };
 
   useEffect(() => {
     if (API_BASE) {
-      addLog("INFO", "Aplicação iniciada", `API usando URL absoluta: ${API_BASE}`);
+      addLog("INFO", "Aplicação iniciada", `API usando URL base: ${API_BASE}`);
     } else {
       addLog(
         "WARN",
         "Aplicação iniciada",
-        "VITE_API_URL não definida. (Em S3 isso vai quebrar /api...)"
+        "VITE_API_URL não definida. Usando caminho relativo."
       );
     }
+
     getTasks();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -46,14 +61,13 @@ function AppContent() {
     }
   };
 
-  // 🔹 Listar Tarefas
+  // Listar tarefas
   const fetchTasks = async () => {
     const url = apiUrl("/api/tarefas");
     logApiRequest("GET", url);
 
     try {
       const res = await fetch(url);
-      // ⚠️ só tenta json se a resposta for JSON
       const contentType = res.headers.get("content-type") || "";
       const data = contentType.includes("application/json")
         ? await res.json()
@@ -65,9 +79,8 @@ function AppContent() {
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
 
-      // se veio texto por algum motivo, força erro amigável
       if (typeof data === "string") {
-        throw new Error("Resposta não-JSON recebida (provável rota errada / S3 / proxy).");
+        throw new Error("Resposta não-JSON recebida.");
       }
 
       return data;
@@ -77,7 +90,7 @@ function AppContent() {
     }
   };
 
-  // 🔹 Buscar Tarefa
+  // Buscar tarefa
   const fetchTask = async (uuid) => {
     const url = apiUrl(`/api/tarefas/${uuid}`);
     logApiRequest("GET", url);
@@ -96,7 +109,7 @@ function AppContent() {
       }
 
       if (typeof data === "string") {
-        throw new Error("Resposta não-JSON recebida (provável rota errada / S3 / proxy).");
+        throw new Error("Resposta não-JSON recebida.");
       }
 
       return data;
@@ -106,7 +119,7 @@ function AppContent() {
     }
   };
 
-  // 🔹 Alternar Prioridade
+  // Alternar prioridade
   const toggleReminder = async (uuid) => {
     try {
       const taskToToggle = await fetchTask(uuid);
@@ -137,7 +150,7 @@ function AppContent() {
       }
 
       if (typeof data === "string") {
-        throw new Error("Resposta não-JSON recebida (provável rota errada / S3 / proxy).");
+        throw new Error("Resposta não-JSON recebida.");
       }
 
       setTasks(
@@ -156,7 +169,7 @@ function AppContent() {
     }
   };
 
-  // 🔹 Adicionar Tarefa
+  // Adicionar tarefa
   const addTask = async (task) => {
     const url = apiUrl("/api/tarefas");
     logApiRequest("POST", url, task);
@@ -180,7 +193,7 @@ function AppContent() {
       }
 
       if (typeof data === "string") {
-        throw new Error("Resposta não-JSON recebida (provável rota errada / S3 / proxy).");
+        throw new Error("Resposta não-JSON recebida.");
       }
 
       setTasks([...tasks, data]);
@@ -191,7 +204,7 @@ function AppContent() {
     }
   };
 
-  // 🔹 Remover Tarefa
+  // Remover tarefa
   const deleteTask = async (uuid) => {
     const url = apiUrl(`/api/tarefas/${uuid}`);
     logApiRequest("DELETE", url);
@@ -254,4 +267,3 @@ function App() {
 }
 
 export default App;
-
